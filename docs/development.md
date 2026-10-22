@@ -23,7 +23,21 @@ python -m pytest
 python -m build --no-isolation
 ```
 
-Use `ruff format .` to apply formatting, then review the changes. The current tests exercise both installed CLI entry points, including invalid input. CI also installs the built wheel in a clean environment and runs it outside the checkout.
+Use `ruff format .` to apply formatting, then review the changes. The tests cover both installed CLI entry points, decimal parsing, missing values, malformed files, and record provenance. CI also installs the built wheel in a clean environment and runs it outside the checkout.
+
+## Inspect local SMARD files
+
+```bash
+energy-ops parse-smard ../data/raw/smard/*.csv
+```
+
+The shell expands the wildcard into input paths. JSON is printed only after all inputs pass structural and numeric parsing. Redirect it to a local report if needed:
+
+```bash
+energy-ops parse-smard ../data/raw/smard/*.csv > /tmp/smard-report.json
+```
+
+The reusable Python interface is `energy_ops.smard.iter_generation(Path(...))`. It streams immutable records with `Decimal` or `None` values, source labels, the source filename, and the physical row number. Exhaust the iterator to check the whole file; early records do not establish that later rows are valid. Records retain local timestamp text. This stage does not check continuity, resolve repeated hours, or detect duplicate time intervals.
 
 ## Dependencies
 

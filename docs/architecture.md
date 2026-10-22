@@ -1,6 +1,6 @@
 # Architecture decisions
 
-Status: proposed design; only the Python foundation is implemented.
+Status: proposed design; the Python foundation and SMARD numeric/structural parser are implemented. Timestamp normalization and persistence remain planned.
 
 ## Objective
 

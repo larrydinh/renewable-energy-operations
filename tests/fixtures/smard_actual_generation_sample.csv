@@ -1,0 +1,4 @@
+Start date;End date;Biomass [MWh] Original resolutions;Hydropower [MWh] Original resolutions;Wind offshore [MWh] Original resolutions;Wind onshore [MWh] Original resolutions;Photovoltaics [MWh] Original resolutions;Other renewable [MWh] Original resolutions;Hydro pumped storage [MWh] Original resolutions
+Jan 1, 2024 12:00 AM;Jan 1, 2024 12:15 AM;981.00;491.00;1,459.75;7,445.00;0.75;35.50;189.00
+Jan 1, 2024 12:15 AM;Jan 1, 2024 12:30 AM;979.75;-;1,437.00;7,358.00;0.00;35.50;102.75
+Jan 1, 2024 12:30 AM;Jan 1, 2024 12:45 AM;-;-;-;-;-;-;112.25

@@ -4,7 +4,7 @@ A Python project for exploring Germany’s renewable electricity generation and 
 
 The goal is to turn public SMARD data into reliable time series that analysts can explore and operators can maintain—from importing a CSV to investigating a failed update.
 
-> **Current stage: project foundation.** The Python package, command-line interface, tests, and CI workflow are in place. Data ingestion and the dashboard are the next development stages.
+> **Current stage: CSV parsing.** The command-line tool reads SMARD files and reports observed, missing, and zero values for each renewable source. UTC normalization and database loading come next.
 
 ## What will this project do?
 
@@ -46,12 +46,12 @@ Later milestones will add **Argo Workflows** for scheduled imports and **Azure K
 | Stage | Deliverable | Status |
 |---|---|---|
 | 1. Foundation | Python package, CLI, tests, and GitHub Actions configuration | Complete |
-| 2. Data ingestion | CSV parsing, validation, and clock-change handling | Next |
+| 2. Data ingestion | CSV parsing, validation, and clock-change handling | Parsing complete; UTC handling next |
 | 3. Storage | PostgreSQL, safe reruns, and correction history | Planned |
 | 4. API and dashboard | Generation queries, charts, and import monitoring | Planned |
 | 5. Operations and deployment | Scheduled jobs, preprod/prod, and recovery checks | Planned |
 
-The current `energy-ops` command displays help and version information. It does not import data yet.
+The current command reads files locally and prints a JSON summary. It preserves original timestamp labels; it does not yet convert them to UTC or load a database.
 
 ## Quick start
 
@@ -71,6 +71,18 @@ python -m pytest
 ```
 
 If you already have the repository, start from its directory and skip the first two commands.
+
+## Parse your SMARD files
+
+With the virtual environment active, pass one or more CSV paths:
+
+```bash
+energy-ops parse-smard ../data/raw/smard/*.csv
+```
+
+This example uses the shared `data/` directory beside the repository. You can pass any explicit local path instead. For each file, the report lists CSV row counts, six renewable measurements per row, and observed, missing, and zero counts by source. A malformed file produces an error with its row and column where applicable; no summary is printed unless all requested files parse successfully.
+
+Try the small included sample with `energy-ops parse-smard tests/fixtures/smard_actual_generation_sample.csv`.
 
 ## Development
 

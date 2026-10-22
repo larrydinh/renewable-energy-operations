@@ -1,6 +1,6 @@
 # SMARD actual-generation contract: initial specification
 
-Status: based on inspection of four annual exports covering 2023–2026 on 22 October 2026. Parser implementation and fixtures are the next milestone. These rules describe those exports, not every possible SMARD download.
+Status: numeric/structural parsing and attributed fixtures are implemented in `energy_ops.smard`. UTC normalization is the next milestone. This contract is based on inspection of four annual exports covering 2023–2026 on 22 October 2026; it describes those exports, not every possible SMARD download.
 
 ## Source format
 
@@ -8,6 +8,7 @@ Status: based on inspection of four annual exports covering 2023–2026 on 22 Oc
 - `Start date` and `End date`, for example `Jan 1, 2024 12:00 AM`.
 - English decimal formatting: `1,459.75` means 1459.75.
 - Missing marker `-`; never substitute zero.
+- Surrounding numeric whitespace is stripped; blank cells and unfamiliar markers are rejected. Decimal parsing allows correctly grouped English numbers and ungrouped digits, with optional sign; numeric plausibility checks are a later validation step.
 - Six renewable headers: Biomass, Hydropower, Wind offshore, Wind onshore, Photovoltaics, Other renewable; each followed by ` [MWh] Original resolutions`.
 - Source local timezone: Europe/Berlin; resolution: 15 elapsed minutes.
 - MWh is interval energy. Do not multiply it by 0.25 again. Pumped storage is excluded from this renewable basket.
@@ -17,6 +18,8 @@ Status: based on inspection of four annual exports covering 2023–2026 on 22 Oc
 Store source identity, timezone-aware UTC start/end, decimal MWh or an explicit missing status, and original file/row provenance. Intervals are `[start, end)`. Original source strings remain recoverable.
 
 ## Clock changes
+
+The current parser preserves these labels verbatim. The normalization rules below are a specification for the next step, not behavior already implemented.
 
 The inspected files contain repeated autumn start labels and two end-label discrepancies per year. For example, the 2024 spring row beginning 01:45 says it ends at 02:00, which is nonexistent locally that day; its actual elapsed end is 03:00 local time.
 
