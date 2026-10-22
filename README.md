@@ -1,80 +1,79 @@
 # Renewable Energy Operations
 
-A Python project for importing, validating, and monitoring German renewable-generation data from SMARD.
+A Python project for exploring Germany’s renewable electricity generation and monitoring the quality of the data behind it.
 
-The intended user is an analyst who needs trustworthy time series or an operator who needs to investigate and safely rerun a failed import. This is an independent learning and portfolio project.
+The goal is to turn public SMARD data into reliable time series that analysts can explore and operators can maintain—from importing a CSV to investigating a failed update.
 
-## Current status
+> **Current stage: project foundation.** The Python package, command-line interface, tests, and CI workflow are in place. Data ingestion and the dashboard are the next development stages.
 
-The foundation provides an installable Python package, the `energy-ops` command, automated tests, linting, formatting, and a GitHub Actions workflow. The command currently displays help and version information only.
+## What will this project do?
 
-CSV ingestion, PostgreSQL, the API, dashboard, Argo, and cloud deployment are planned. This repository is not a production-ready service yet.
+The platform is being built to answer four questions:
 
-## Local setup
+- How much electricity comes from wind, solar, and other renewable sources?
+- How does generation change by day, month, and year?
+- Where is data missing, duplicated, or inconsistent?
+- Which imports failed, and how can they be rerun safely?
 
-Prerequisites: Git and Python 3.11 or newer. CI checks Python 3.11, 3.12, and 3.13. No database, Docker, cloud account, or credentials are needed at this stage.
+The main engineering challenges are handling clock changes correctly, keeping missing values distinct from zero, and updating data without creating duplicate records.
 
-From the repository directory on macOS/Linux:
+## Data
+
+The project uses **German actual-generation exports from [SMARD](https://www.smard.de/en/downloadcenter/download-market-data)** at **15-minute intervals**, measured in **MWh**.
+
+It covers biomass, hydropower, offshore wind, onshore wind, solar photovoltaics, and other renewables. The initial downloaded files cover **2023–2025 and part of 2026**. Full datasets are kept outside Git.
+
+Source: **Bundesnetzagentur | SMARD.de**, under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). See the [data contract](docs/data-contract.md) for timestamp, unit, and missing-value rules.
+
+## Planned data flow
+
+```text
+SMARD CSV files
+      ↓
+Python — read, validate, and normalize
+      ↓
+PostgreSQL — store generation data and import history
+      ↓
+FastAPI — provide access to the data
+      ↓
+Streamlit — display trends, data quality, and import status
+```
+
+Later milestones will add **Argo Workflows** for scheduled imports and **Azure Kubernetes Service (AKS)** for deployment. The [architecture notes](docs/architecture.md) explain the design decisions.
+
+## Progress
+
+| Stage | Deliverable | Status |
+|---|---|---|
+| 1. Foundation | Python package, CLI, tests, and GitHub Actions configuration | Complete |
+| 2. Data ingestion | CSV parsing, validation, and clock-change handling | Next |
+| 3. Storage | PostgreSQL, safe reruns, and correction history | Planned |
+| 4. API and dashboard | Generation queries, charts, and import monitoring | Planned |
+| 5. Operations and deployment | Scheduled jobs, preprod/prod, and recovery checks | Planned |
+
+The current `energy-ops` command displays help and version information. It does not import data yet.
+
+## Quick start
+
+You need **Git and Python 3.11+**. The commands below are for macOS/Linux; no database or cloud account is required for the foundation.
 
 ```bash
+git clone https://github.com/larrydinh/renewable-energy-operations.git
+cd renewable-energy-operations
+
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements-dev.txt
 python -m pip install --no-build-isolation --no-deps -e .
+
 energy-ops --help
-energy-ops --version
-```
-
-`-e .` installs the package in editable mode: changes under `src/` are available without reinstalling. Activate the environment in each new terminal. Alternatively, run `python -m energy_ops`.
-
-## Check your changes
-
-```bash
-ruff check .
-ruff format --check .
 python -m pytest
-python -m build --no-isolation
 ```
 
-To apply formatting, run `ruff format .`, inspect the changes, and repeat the checks. Tests exercise both installed CLI entry points, including invalid input. CI also installs the built wheel into a clean environment and runs it outside the checkout so missing package files are detected.
+If you already have the repository, start from its directory and skip the first two commands.
 
-`requirements-dev.txt` pins the development/build tool versions used locally and in CI. `pyproject.toml` declares the supported dependency ranges. Update the pins deliberately and run the full CI matrix when changing them; the pins do not constitute a security audit or hash-verified supply-chain lock.
+## Development
 
-## Layout
+Application code lives in `src/energy_ops/`, tests in `tests/`, and design notes in `docs/`.
 
-```text
-src/energy_ops/       Installable package and CLI
-tests/               Automated tests
-docs/                Architecture and source contract
-.github/workflows/   Continuous integration
-pyproject.toml       Package metadata and tool settings
-requirements-dev.txt Pinned development/build dependencies
-```
-
-Keep full downloads in ignored `data/raw/` or outside the repository. Small, attributed fixtures will be added under `tests/fixtures/` with the parser milestone. Never commit passwords, tokens, or real `.env` files. `.env.example` documents configuration when it becomes necessary.
-
-## Development workflow
-
-1. Create a feature branch, for example `git switch -c feature/smard-parser`.
-2. Implement one coherent change and its relevant tests.
-3. Run checks and review `git diff` and `git status`.
-4. Stage the intended files, commit with a descriptive message, and push the branch.
-5. Open a pull request explaining behavior and validation; merge after CI passes.
-
-The CI workflow runs on pushes and pull requests after it is uploaded to GitHub. Repository branch protection is a separate GitHub setting; it is not enabled by this file.
-
-## Roadmap
-
-1. **Foundation:** package, documentation, tests, and automatic checks.
-2. **SMARD parser:** explicit numeric format, missing values, units, and tested UTC intervals.
-3. **Persistence:** PostgreSQL migrations, atomic ingestion, safe reruns, and revision history.
-4. **API:** bounded queries, completeness metadata, and import history.
-5. **Dashboard:** generation trends, quality issues, and execution details.
-6. **Operations:** durable job requests, Argo workflows, live acquisition, and recovery.
-7. **Deployment:** preprod/prod, access controls, release promotion, and restore tests.
-
-See [architecture](docs/architecture.md) and [data contract](docs/data-contract.md). The next milestone is a tested parser, not cloud deployment.
-
-## Data attribution
-
-Planned source: [Bundesnetzagentur | SMARD.de](https://www.smard.de/en/downloadcenter/download-market-data), available under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Derived datasets and fixtures must retain attribution and describe transformations. The source-data licence is distinct from the repository's software licensing; no software licence has been selected yet.
+GitHub Actions is configured to run tests, linting, formatting checks, and package builds on Python 3.11–3.13. For the local checks, dependency management, and contribution workflow, see the [development guide](docs/development.md).
