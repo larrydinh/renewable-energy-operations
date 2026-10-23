@@ -1,6 +1,6 @@
 # SMARD actual-generation contract: initial specification
 
-Status: numeric/structural parsing and attributed fixtures are implemented in `energy_ops.smard`. UTC normalization is the next milestone. This contract is based on inspection of four annual exports covering 2023–2026 on 22 October 2026; it describes those exports, not every possible SMARD download.
+Status: numeric/structural parsing is implemented in `energy_ops.smard`; UTC timeline normalization is implemented in `energy_ops.time_normalization`. This contract is based on inspection of four annual exports covering 2023–2026 on 22 October 2026; it describes those exports, not every possible SMARD download.
 
 ## Source format
 
@@ -19,13 +19,19 @@ Store source identity, timezone-aware UTC start/end, decimal MWh or an explicit 
 
 ## Clock changes
 
-The current parser preserves these labels verbatim. The normalization rules below are a specification for the next step, not behavior already implemented.
+The numeric parser preserves labels verbatim. The separate normalizer applies the rules below and returns records only after the entire requested period passes validation.
 
 The inspected files contain repeated autumn start labels and two end-label discrepancies per year. For example, the 2024 spring row beginning 01:45 says it ends at 02:00, which is nonexistent locally that day; its actual elapsed end is 03:00 local time.
 
 For a complete ordered export, require an explicit period, generate its UTC grid, and check every source start label and the full row count before assigning UTC identities. Derive the canonical end by adding 15 elapsed minutes. Preserve and report recognized end-label discrepancies.
 
 Do not apply row-position assignment to shuffled, truncated or incomplete grids. Ambiguous partial inputs require offsets or independent evidence; otherwise reject them. Do not deduplicate on local labels. Expected local-day counts are 92, 96 or 100, calculated from timezone-aware midnight boundaries.
+
+The source's chronological order is part of this contract. Without offsets, swapping two complete, identically labelled autumn-hour occurrences is not detectable from the labels alone. Preserve original row order; never sort an export by its naive timestamps. The explicit period and exact-grid checks reject detectable ordering defects, not every possible alteration of an ambiguous source.
+
+Policy version: `smard-complete-grid-v1`. A recognized discrepancy is accepted only when the UTC offset changes at that interval boundary and the raw end equals the raw start plus 15 wall-clock minutes. Other end mismatches fail. Warnings retain the physical CSV row, original end, canonical local end with offset, and UTC end.
+
+English month and AM/PM labels are parsed without changing or relying on the machine's locale. UTC instants use Python's timezone-aware `datetime` objects; calendar conversion uses `zoneinfo` and the system's Europe/Berlin timezone database.
 
 ## Coverage
 

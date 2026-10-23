@@ -1,6 +1,6 @@
 # Architecture decisions
 
-Status: proposed design; the Python foundation and SMARD numeric/structural parser are implemented. Timestamp normalization and persistence remain planned.
+Status: the Python foundation, SMARD numeric/structural parsing, and complete-grid UTC normalization are implemented. Persistence, the API, dashboard, and deployment remain planned.
 
 ## Objective
 
@@ -27,7 +27,7 @@ Argo will later run the same ingestion command for scheduled and manual jobs. AK
 
 ## First implementation gate
 
-A parser must correctly handle normal days, both daylight-saving transitions, leap days, numeric zeros and missing markers. Shuffled or structurally invalid files must fail clearly. Add PostgreSQL only once this contract has tests.
+A parser must correctly handle normal days, both daylight-saving transitions, leap days, numeric zeros and missing markers. Detectable ordering defects and structurally invalid files must fail clearly. This contract now has automated tests; all four local annual exports have passed normalization with unchanged measurements. The next implementation gate is PostgreSQL schema/migrations, atomic publication, and duplicate-safe reruns.
 
 ## Production gate
 

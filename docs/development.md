@@ -23,7 +23,7 @@ python -m pytest
 python -m build --no-isolation
 ```
 
-Use `ruff format .` to apply formatting, then review the changes. The tests cover both installed CLI entry points, decimal parsing, missing values, malformed files, and record provenance. CI also installs the built wheel in a clean environment and runs it outside the checkout.
+Use `ruff format .` to apply formatting, then review the changes. The tests cover both installed CLI entry points, decimal parsing, missing values, malformed files, record provenance, clock changes, and timeline validation. CI also installs the built wheel in a clean environment and runs it outside the checkout.
 
 ## Inspect local SMARD files
 
@@ -38,6 +38,36 @@ energy-ops parse-smard ../data/raw/smard/*.csv > /tmp/smard-report.json
 ```
 
 The reusable Python interface is `energy_ops.smard.iter_generation(Path(...))`. It streams immutable records with `Decimal` or `None` values, source labels, the source filename, and the physical row number. Exhaust the iterator to check the whole file; early records do not establish that later rows are valid. Records retain local timestamp text. This stage does not check continuity, resolve repeated hours, or detect duplicate time intervals.
+
+## Normalize a complete export
+
+```bash
+energy-ops normalize-smard \
+  ../data/raw/smard/Actual_generation_202401010000_202501010000_Quarterhour.csv \
+  --start-date 2024-01-01 --end-date 2025-01-01
+```
+
+These required dates describe the entire file, with an exclusive end; they are not query filters. The normalizer verifies every start and end label against the UTC timeline, rejects detectable missing/duplicated/reordered slots, and reports the known end-label conventions at clock transitions. Missing measurements remain `None`; future empty slots in the 2026 export are still valid calendar slots, not observed generation.
+
+For application code:
+
+```python
+from datetime import date
+from pathlib import Path
+
+from energy_ops.time_normalization import normalize_file
+
+result = normalize_file(
+    Path("../data/raw/smard/Actual_generation_202401010000_202501010000_Quarterhour.csv"),
+    start_date=date(2024, 1, 1),
+    end_date=date(2025, 1, 1),
+)
+first = result.records[0]
+print(first.interval_start_utc, first.interval_end_utc, first.energy_mwh)
+print(result.summary())
+```
+
+The function holds one file's records in memory and returns an immutable result only after complete validation. The CLI prints a compact report; it does not save a normalized dataset or change the original CSV. Later ingestion will stage/publish these records transactionally. Preserve source row order, especially across the repeated autumn hour; see the data contract for the limits of offset-free labels.
 
 ## Dependencies
 
