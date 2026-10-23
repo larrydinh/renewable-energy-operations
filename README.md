@@ -116,6 +116,18 @@ Keep the terminal running. Ctrl+C stops the API and dashboard; PostgreSQL data p
 
 See the [local runbook](docs/local-runbook.md) for individual commands, tests, backups, and troubleshooting.
 
+## Import a batch of exports
+
+With PostgreSQL running and the schema initialized, import all matching exports from a directory:
+
+```bash
+energy-ops import-smard-batch ../data/raw/smard
+```
+
+The command reads local midnight boundaries from filenames such as `Actual_generation_202401010000_202501010000_Quarterhour.csv`, then validates each file against that period. It processes files in filename order, skips unchanged exports safely, and prints a JSON summary of successful, unchanged, and failed imports. A failed file does not prevent later files from being attempted; successful files remain committed. Exit code **0** means every file succeeded or was unchanged; **1** means an input or import failed.
+
+Corrections still require review and the single-file `import-smard --accept-corrections` command. Batch import reads existing files; it does not download new SMARD data or schedule itself. See the [batch import runbook](docs/local-runbook.md#batch-imports) for reporting and recovery.
+
 ## Parse your SMARD files
 
 With the virtual environment active, pass one or more CSV paths:

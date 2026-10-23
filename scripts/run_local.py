@@ -1,12 +1,10 @@
 """Start the local workspace; Ctrl+C stops only the API/UI processes started here."""
 
 import argparse
-import re
 import socket
 import subprocess
 import sys
 import time
-from datetime import datetime
 from pathlib import Path
 
 import requests
@@ -17,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--data-dir", type=Path, help="Optionally import annual SMARD exports first"
+        "--data-dir", type=Path, help="Optionally batch-import local SMARD exports first"
     )
     args = parser.parse_args()
     for port in (18000, 18501):
@@ -29,31 +27,17 @@ def main() -> None:
     )
     subprocess.run([sys.executable, "-m", "energy_ops", "init-db"], cwd=ROOT, check=True)
     if args.data_dir:
-        files = sorted(args.data_dir.resolve().glob("Actual_generation_*_Quarterhour.csv"))
-        if not files:
-            raise SystemExit(f"No annual exports found in {args.data_dir}")
-        for path in files:
-            match = re.fullmatch(r"Actual_generation_(\d{12})_(\d{12})_Quarterhour.csv", path.name)
-            if not match:
-                raise SystemExit(f"Unrecognized export filename: {path.name}")
-            start, end = [datetime.strptime(v, "%Y%m%d%H%M") for v in match.groups()]
-            if any(dt.hour or dt.minute for dt in (start, end)):
-                raise SystemExit("Local launcher imports require midnight period boundaries")
-            subprocess.run(
-                [
-                    sys.executable,
-                    "-m",
-                    "energy_ops",
-                    "import-smard",
-                    str(path),
-                    "--start-date",
-                    start.date().isoformat(),
-                    "--end-date",
-                    end.date().isoformat(),
-                ],
-                cwd=ROOT,
-                check=True,
-            )
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "energy_ops",
+                "import-smard-batch",
+                str(args.data_dir.resolve()),
+            ],
+            cwd=ROOT,
+            check=True,
+        )
     logs = ROOT / ".local" / "logs"
     logs.mkdir(parents=True, exist_ok=True)
     processes = []

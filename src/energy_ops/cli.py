@@ -1,4 +1,4 @@
-"""Command-line entry point for local data inspection."""
+"""Command-line entry point for local data inspection and publication."""
 
 import argparse
 import json
@@ -24,10 +24,10 @@ def iso_date(value: str) -> date:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    """Validate CSVs locally without starting external services."""
+    """Inspect, normalize, or publish local CSV exports."""
     parser = argparse.ArgumentParser(
         prog="energy-ops",
-        description="Renewable-generation data operations: inspect SMARD CSV files locally.",
+        description="Renewable-generation data operations for local SMARD exports.",
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     commands = parser.add_subparsers(dest="command")
@@ -51,7 +51,24 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
         help="Explicitly replace conflicting known values, retaining revisions",
     )
+    batch = commands.add_parser(
+        "import-smard-batch", help="Import a directory of exports and report every outcome"
+    )
+    batch.add_argument(
+        "directory", type=Path, help="Directory containing SMARD quarter-hour exports"
+    )
     args = parser.parse_args(argv)
+    if args.command == "import-smard-batch":
+        from energy_ops.batch import import_directory
+        from energy_ops.db import get_engine
+
+        try:
+            report = import_directory(get_engine(), args.directory)
+        except (ValueError, OSError, RuntimeError) as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
+        print(json.dumps(report, indent=2))
+        return 1 if report["failed"] else 0
     if args.command in ("init-db", "import-smard"):
         from psycopg import Error as PsycopgError
         from sqlalchemy.exc import SQLAlchemyError

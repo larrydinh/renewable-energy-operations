@@ -25,7 +25,7 @@ docker pull postgres:17
 ./scripts/start-local.sh --data-dir ../data/raw/smard
 ```
 
-The launcher applies Alembic migrations before starting services. With `--data-dir`, export filenames provide explicit period arguments; the entire timeline is still validated against those periods. Identical reimports are safe. Logs are in ignored `.local/logs/`. Ctrl+C stops only the API and dashboard children launched by this process. The database stays running; `docker compose stop db` stops it while retaining data.
+The launcher applies Alembic migrations before starting services. With `--data-dir`, the launcher invokes `import-smard-batch`; export filenames provide period boundaries and the entire timeline is validated against those periods. If any file fails, the launcher exits before starting the API/UI; imports already committed remain available. Identical reimports are safe. Logs are in ignored `.local/logs/`. Ctrl+C stops only the API and dashboard children launched by this process. The database stays running; `docker compose stop db` stops it while retaining data.
 
 If you see "port already in use", the workspace may already be running. Open its URLs or stop the existing launcher before starting another one. The launcher does not kill other applications or take over occupied ports.
 
@@ -49,6 +49,34 @@ python -m uvicorn energy_ops.api:app --host 127.0.0.1 --port 18000
 ```bash
 python -m streamlit run src/energy_ops/dashboard.py
 ```
+
+## Batch imports
+
+Run a batch without restarting the API or dashboard:
+
+```bash
+source .venv/bin/activate
+energy-ops import-smard-batch ../data/raw/smard
+```
+
+The command scans the directory non-recursively for `Actual_generation_*_Quarterhour.csv`, in filename order. Other files are ignored. Missing directories and directories with no matches fail instead of silently succeeding. Matching files with invalid names, dates, non-midnight boundaries, or non-increasing periods are reported as failures. The filename end is exclusive, and file content must pass the existing full-period validation; filenames alone do not prove validity.
+
+Each file is a separate atomic import. A failed file rolls back its publication, and later files are still attempted. Earlier successful files remain committed: the batch is not one all-or-nothing transaction. The existing publication lock, checksum checks, revision history, and missing-value preservation also apply to batches. Conflicting known values fail; there is deliberately no batch-wide correction approval flag. Review the relevant export and use `import-smard FILE --start-date START --end-date END --accept-corrections` explicitly if appropriate.
+
+Standard output contains a JSON report with UTC start/finish times, per-file outcomes, successful run IDs, counts of succeeded/no-change/failed files, and inserted/updated measurement totals. A top-level `succeeded` status includes clean batches of only no-change files. Exit code **0** means all files succeeded or were unchanged; **1** means a file or input directory failed. Invalid CLI arguments use argparse's exit code **2**. Directory-level errors go to standard error without a JSON report. Database error details are replaced with a generic message in the report.
+
+To keep a report and preserve its exit status in a shell:
+
+```bash
+mkdir -p .local/reports
+energy-ops import-smard-batch ../data/raw/smard > .local/reports/latest-batch.json
+batch_exit=$?
+echo "Batch exit code: $batch_exit"
+```
+
+Publication attempts are recorded in `import_runs` when the database is reachable. Filename/directory failures happen before a database import attempt and appear only in the batch output. Database outages can prevent audit persistence. The batch report itself is not stored as a separate database entity.
+
+After a partial failure, inspect the report, fix the rejected input or database problem, and rerun the same directory. Unchanged successful exports will be skipped. Open **Import history** and press **Refresh** to inspect database-recorded outcomes. This command is suitable for a future scheduler, but automated retrieval, scheduling, and interrupted-run reconciliation remain unimplemented.
 
 ## Import behavior
 
