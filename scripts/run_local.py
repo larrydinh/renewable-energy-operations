@@ -59,7 +59,16 @@ def main() -> None:
             ),
             (
                 "dashboard",
-                [sys.executable, "-m", "streamlit", "run", "src/energy_ops/dashboard.py"],
+                [
+                    sys.executable,
+                    "-m",
+                    "uvicorn",
+                    "energy_ops.api:app",
+                    "--host",
+                    "127.0.0.1",
+                    "--port",
+                    "18501",
+                ],
             ),
         ):
             handle = (logs / f"{name}.log").open("a")
@@ -67,7 +76,7 @@ def main() -> None:
             processes.append(
                 subprocess.Popen(command, cwd=ROOT, stdout=handle, stderr=subprocess.STDOUT)
             )
-        for url in ("http://127.0.0.1:18000/health/ready", "http://127.0.0.1:18501/_stcore/health"):
+        for url in ("http://127.0.0.1:18000/health/ready", "http://127.0.0.1:18501/health/ready"):
             for _ in range(60):
                 if any(process.poll() is not None for process in processes):
                     raise RuntimeError(f"A service exited. Check {logs}")

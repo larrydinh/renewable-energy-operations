@@ -1,52 +1,56 @@
 # Dashboard UI guide
 
-[Back to project README](../README.md) · [Start the local services](local-runbook.md)
+[Back to README](../README.md) · [Start the local services](local-runbook.md)
 
-The Streamlit dashboard reads imported German SMARD generation data through FastAPI. PostgreSQL stores the measurements and execution history. The current workspace uses local historical CSV exports; it does not fetch live measurements or schedule imports.
+The custom HTML/CSS/JavaScript dashboard reads validated German SMARD data through FastAPI. PostgreSQL stores measurements and import history. The application uses existing local exports; it does not download new measurements or schedule imports.
 
-## Navigation
+## Navigation and dates
 
-Use the left sidebar to open Dashboard, Timeseries, Data quality, Import history, or Settings. The navy header identifies the local workspace. **Refresh** clears cached responses and reruns the current page; it does not import files. The last-import timestamp describes the latest recorded finished attempt, not the latest measurement.
+Use the sage sidebar to open Overview, Timeseries, Data quality, Imports, or Settings. The breadcrumb identifies the current page. The refresh icon reloads measurements, import history, and health checks without importing files.
 
-## Dashboard
+The start and end date controls apply to Overview, Timeseries, and Data quality; both dates are inclusive in the UI. The default is the latest seven calendar days within observed coverage. The date selection remains when changing views. Imports and Settings do not use the date filter. Browser locale determines the native date-input format, while date boundaries and chart times always use Europe/Berlin.
 
-[![Operations overview with status cards and execution charts](screenshots/dashboard-overview.jpg)](screenshots/dashboard-overview.jpg)
+## Overview
 
-The home page answers: did the imports work, what data is stored, and are the services reachable?
+[![Forest Studio custom web overview](screenshots/dashboard-overview.jpg)](screenshots/dashboard-overview.jpg)
 
-- **Recent import runs**, **Succeeded imports**, **Failed imports**, and **No-change runs** summarize the latest 200 recorded attempts. No change means an identical export was safely skipped.
-- **Renewable sources** counts the six source categories. **Observed measurements** counts stored non-missing source values. **Unavailable export slots** counts stored missing values, including future empty slots in annual exports; it is not an outage count.
-- **Validated intervals** counts the loaded 15-minute calendar slots. Each slot has six source records. **Recent timestamp notes** counts recognized clock-change label discrepancies in successful imports within the recent run history.
-- **API service** and **PostgreSQL database** show health-check results and their check time. They describe reachability, not data freshness.
-- **Job Execution Trends** shows recorded attempts over the last five days. **Job Distribution** summarizes outcomes within the recent run history.
-- **Scheduled Workflows** states that Argo is not configured. **Today's Runs** lists attempts started on the current German local date, with filename search and a phase filter.
-
-Cards describing stored measurements cover the whole loaded database; execution counts cover the latest 200 attempts.
+- **Observed measurements** counts available source/interval measurements in the selected dates across six sources. A measured zero is available; a missing value is not.
+- **Import runs** counts the latest 200 recorded attempts independently of selected dates, with succeeded, no-change, and failed totals. No change means publication safely left observations unchanged.
+- **Coverage** divides available measurements by the expected grid for the selected dates, including the 92/100 quarter-hours on clock-change days. The coverage ring shows available, missing, and expected counts.
+- **Renewable generation in Germany** shows 15-minute measurements for selections of at most 31 days. The chart converts MWh per quarter-hour to average MW by multiplying by four. Stacked source areas are drawn only where all six sources have values; unavailable or absent slots create gaps rather than zeroes. If any negative value occurs, the chart uses separate lines. Hover for individual source values. For longer selections, the chart uses daily energy in GWh; incomplete daily periods use separate observed-subtotal lines.
+- **Service health** checks local API/PostgreSQL reachability when loading or refreshing. It is a snapshot, not continuous monitoring or a statement about data freshness. Argo is explicitly **Not configured**.
+- **Recent import runs** shows the newest six attempts, with filename, outcome, inserted/updated/preserved counts, and elapsed seconds. **View all imports** opens the searchable Imports page. An unfinished run displays “Running” as its duration.
 
 ## Timeseries
 
-[![Generation analysis with date and source filters](screenshots/dashboard-timeseries.jpg)](screenshots/dashboard-timeseries.jpg)
+[![Custom Timeseries page](screenshots/dashboard-timeseries.jpg)](screenshots/dashboard-timeseries.jpg)
 
-1. Choose a **Year** to set the initial date range, then adjust the start and end dates. The UI includes the selected end date.
-2. Choose **Daily**, **Monthly**, or **Yearly** chart resolution. Aggregates cover only the selected dates, so a partial month or year remains partial.
-3. Select one or more **Energy sources**. The metrics and charts update together.
-4. Inspect generation by source, the generation mix, and source-level coverage. Hover over Plotly charts for values and use their toolbar to zoom or save a chart image.
-5. Open **Explore and Export** to inspect the aggregate rows and select **Download Selected Data · CSV**.
+Choose dates at the top, then choose Daily, Monthly, or Yearly resolution and tick the energy sources. The chart and metrics update together. The headline energy metric uses TWh; the chart and source table use GWh. Incomplete selections are labelled as observed energy subtotals. A partial month/year remains partial; changing resolution does not expand the date range.
 
-The headline energy metric uses TWh, charts use GWh, and the exported energy column uses MWh. Coverage is observed source/interval measurements divided by expected source/interval measurements. A measured zero is valid data; a missing value is unavailable. When anything is missing, energy is labelled as an observed subtotal rather than a complete total. Date selections and aggregation periods follow Europe/Berlin, including daylight-saving changes.
+Use **Export CSV** to download the current aggregate selection. Exported energy stays in MWh and retains the API's decimal strings. Columns include expected, observed, and missing counts, coverage, and completeness. Expand **Explore aggregate rows** to inspect the exported data in the page. No chart zoom or PNG-export toolbar is implemented in this custom frontend.
 
 ## Data quality
 
-Use the same date, resolution, and source filters to inspect the coverage heatmap. **Timestamp Normalization Notes** shows recognized source-label discrepancies recorded during successful imports; these notes cover loaded exports, not only the selected chart period. The export table includes expected, observed, and missing counts, coverage percentage, and a completeness flag.
+[![Coverage heatmap, completeness metrics, and timestamp notes](screenshots/dashboard-quality.jpg)](screenshots/dashboard-quality.jpg)
 
-## Import history
+The same date, resolution, and source controls drive the coverage heatmap and source table. Hover a cell to see its period and percentage. Green means complete, pale green means at least 95%, and amber means below 95%. Text coverage values remain available in the source table.
 
-Search for part of a CSV filename and choose a **Phase** to narrow the recent run list. Each row shows its start, finish, and outcome in Europe/Berlin time. Failed runs expose their recorded error, and **Publication Counts** shows inserted, updated, preserved, and missing counts. Importing and approving corrections remain CLI operations; this page displays their results.
+Timestamp normalization notes show recognized source-label discrepancies from the latest 200 attempts that succeeded, across all their loaded periods. They do not follow the generation date filter. CSV export contains the same selected aggregate rows as Timeseries.
+
+## Imports
+
+[![Import execution history with filename search and phase filters](screenshots/dashboard-imports.jpg)](screenshots/dashboard-imports.jpg)
+
+Search for part of a filename and choose a phase to narrow the latest 200 attempts. Start times use Europe/Berlin. Expand a run to inspect its ID, source period, record counts, timestamp notes, and any recorded error. Importing files and approving corrections remain CLI operations; the UI is read-only.
 
 ## Settings
 
-Settings displays the local region, source, timezone, measurement resolution, energy unit, API address, import mode, and scheduling status. It is read-only; configuration is managed in project files, and credentials are not displayed.
+[![Read-only local workspace settings](screenshots/dashboard-settings.jpg)](screenshots/dashboard-settings.jpg)
 
-## Screenshot maintenance
+Settings displays the local environment, region, timezone, stored unit, API origin, import mode, scheduling status, stored-record count, and latest observed interval end. Configuration is managed in project files. Database credentials are not shown.
 
-Screenshots are stored in `docs/screenshots/` and were captured from the running local application on 23 October 2026. They contain real imported data and execution results, so their counts are examples rather than fixed expectations. After a substantial UI change, replace the screenshots and review this guide and the README together. The README uses repository-relative image links so GitHub can render them after the files are committed and pushed.
+## Screenshots and limitations
+
+Screenshots in `docs/screenshots/` show actual local data on 23 October 2026. The Overview preview covers 16–22 October 2026. The Timeseries and Data quality previews use yearly aggregates over 1 May 2024–22 October 2026, so their 2024 and 2026 buckets are partial. Imports and Settings are independent of the generation date range. Counts change after imports. Refresh them with the README after a substantial design change. Relative links let GitHub render the images once committed and pushed.
+
+The frontend includes responsive layouts, semantic navigation, labelled controls, accessible status text, and escaped source text. Service checks are snapshots; authorization, remote hosting, scheduled acquisition, and durable job execution remain later milestones.

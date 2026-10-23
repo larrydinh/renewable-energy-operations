@@ -20,6 +20,7 @@ Run these from the repository root before committing:
 ruff check .
 ruff format --check .
 python -m pytest
+node --test tests/web/*.test.mjs  # Node.js 22+
 python -m build --no-isolation
 ```
 
@@ -67,7 +68,7 @@ print(first.interval_start_utc, first.interval_end_utc, first.energy_mwh)
 print(result.summary())
 ```
 
-The function holds one file's records in memory and returns an immutable result only after complete validation. The CLI prints a compact report; it does not save a normalized dataset or change the original CSV. Later ingestion will stage/publish these records transactionally. Preserve source row order, especially across the repeated autumn hour; see the data contract for the limits of offset-free labels.
+The function holds one file's records in memory and returns an immutable result only after complete validation. The CLI prints a compact report; it does not save a normalized dataset or change the original CSV. Ingestion stages/publishes these records transactionally. Preserve source row order, especially across the repeated autumn hour; see the data contract for the limits of offset-free labels.
 
 ## Dependencies
 
@@ -78,7 +79,9 @@ Update pins deliberately and check the complete Python CI matrix after dependenc
 ## Repository layout
 
 ```text
-src/energy_ops/        Python package and CLI
+src/energy_ops/        Python package, CLI, API
+src/energy_ops/web/    Build-free HTML, CSS, JavaScript frontend
+tests/web/            Browser data transformation tests (Node.js)
 tests/                Automated tests
 docs/                 Architecture, data contract, and development guide
 .github/workflows/    Continuous integration
@@ -100,6 +103,10 @@ The CI workflow runs on pushes and pull requests when uploaded to GitHub. Branch
 
 Keep full downloads in ignored `data/raw/` or outside the repository. Add small, attributed fixtures under `tests/fixtures/` when implementing the parser. Preserve original source files and describe any fixture transformations.
 
-Never commit passwords, tokens, or real `.env` files. `.env.example` documents the database and API settings. See the [local runbook](local-runbook.md) for database setup, imports, starting services, and isolated PostgreSQL tests.
+Never commit passwords, tokens, or real `.env` files. `.env.example` documents the database settings. See the [local runbook](local-runbook.md) for database setup, imports, starting services, and isolated PostgreSQL tests.
 
 The SMARD data licence is distinct from software licensing. No software licence has been selected for this repository yet.
+
+## Frontend development
+
+`web/index.html` defines the semantic application shell, `styles.css` implements the responsive Forest Studio design, `app.js` handles navigation and API requests, and `data.js` holds tested date/coverage/chart/CSV transformations. No npm dependencies or build are required. `package.json` declares ES modules and a convenience `npm test` command. Use Node.js 22+ for tests; the browser loads modules directly. FastAPI serves assets from the installed package, so verify that the wheel contains these files when changing packaging.

@@ -52,6 +52,13 @@ jobs:
         run: ruff check .
       - name: Check formatting
         run: ruff format --check .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test browser data transformations
+        run: |
+          node --check src/energy_ops/web/app.js
+          node --test tests/web/*.test.mjs
       - name: Test installed entry points
         run: python -m pytest
       - name: Build distribution

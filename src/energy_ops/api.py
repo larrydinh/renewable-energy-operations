@@ -5,12 +5,14 @@ from collections.abc import Iterator
 from datetime import UTC, date, datetime, time
 from decimal import Decimal
 from enum import StrEnum
+from pathlib import Path
 from typing import Annotated
 from zoneinfo import ZoneInfo
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import Connection, Engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -195,6 +197,13 @@ def create_app(engine: Engine | None = None) -> FastAPI:
             {"limit": limit},
         )
         return encoded({"data": [dict(row) for row in rows.mappings()]})
+
+    web = Path(__file__).parent / "web"
+    application.mount("/assets", StaticFiles(directory=web), name="assets")
+
+    @application.get("/", include_in_schema=False)
+    def dashboard():
+        return FileResponse(web / "index.html", headers={"Cache-Control": "no-cache"})
 
     return application
 

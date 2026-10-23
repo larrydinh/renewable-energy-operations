@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Energy Operations</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/assets/styles.css" />
+    <script type="module" src="/assets/app.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <aside class="sidebar">
+      <a class="brand" href="#overview"
+        ><svg viewBox="0 0 32 36" aria-hidden="true">
+          <path d="M3 29C0 12 12 3 30 2C30 22 20 34 3 29Z" fill="#247744" />
+          <path
+            d="M2 34L25 8M12 23L11 15M18 17L24 18"
+            stroke="white"
+            fill="none"
+          /></svg
+        ><span
+          ><strong>Energy Operations</strong><small>Germany</small></span
+        ></a
+      >
+      <div class="workspace">
+        <span data-icon="monitor"></span>Local workspace<span
+          class="workspace-dot"
+          title="Local environment"
+        ></span>
+      </div>
+      <nav aria-label="Main navigation"></nav>
+      <div class="sidebar-footer">
+        <span class="eyebrow">DATA WORKSPACE</span>
+        <p>Historical SMARD exports</p>
+        <small>Europe/Berlin · 15-minute data</small>
+      </div>
+    </aside>
+    <header class="topbar">
+      <div id="breadcrumb">
+        Energy Operations <span>/</span> Germany <span>/</span> Overview
+      </div>
+      <div class="top-actions">
+        <span class="local-badge">LOCAL WORKSPACE</span
+        ><button
+          id="refresh"
+          class="icon-button"
+          aria-label="Refresh data"
+          title="Refresh data"
+        >
+          <span data-icon="refresh"></span>
+        </button>
+      </div>
+    </header>
+    <main id="main" tabindex="-1">
+      <div class="page-heading">
+        <div>
+          <h1 id="title">Overview</h1>
+          <p id="subtitle">
+            Renewable generation, data imports and system health at a glance.
+          </p>
+        </div>
+        <div class="date-range">
+          <span data-icon="calendar"></span
+          ><label class="sr-only" for="start">Start date</label
+          ><input id="start" type="date" /><span>–</span
+          ><label class="sr-only" for="end">End date</label
+          ><input id="end" type="date" /><span class="timezone">Berlin</span>
+        </div>
+      </div>
+      <div id="message" role="status" aria-live="polite"></div>
+      <div id="content" aria-busy="true">
+        <p class="loading">Loading your workspace…</p>
+      </div>
+      <footer>
+        Bundesnetzagentur | SMARD.de · CC BY 4.0
+        <span>Local historical data · Europe/Berlin</span>
+      </footer>
+    </main>
+  </body>
+</html>

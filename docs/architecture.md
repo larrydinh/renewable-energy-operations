@@ -1,6 +1,6 @@
 # Architecture decisions
 
-Status: numeric parsing, UTC normalization, PostgreSQL storage, the read-only FastAPI service, and a four-view Streamlit dashboard are implemented locally. Workflow automation and cloud deployment remain planned.
+Status: numeric parsing, UTC normalization, PostgreSQL storage, the read-only FastAPI service, and a five-view custom HTML/CSS/JavaScript dashboard are implemented locally. Workflow automation and cloud deployment remain planned.
 
 ## Objective
 
@@ -10,7 +10,7 @@ Let analysts inspect German renewable-generation data and let operators recover 
 
 ```text
 SMARD export -> immutable raw file -> Python validation and normalization
-             -> PostgreSQL -> FastAPI -> Streamlit
+             -> PostgreSQL -> FastAPI -> HTML/CSS/JavaScript
 ```
 
 Argo will later run the same ingestion command for scheduled and manual jobs. AKS is a later deployment milestone. PostgreSQL stores measurements, import attempts and previous corrected values. Oracle, contracts, settlement and simulated customer readings are outside the first release. See the [local runbook](local-runbook.md) for the implemented behavior and current limitations.
@@ -32,3 +32,9 @@ A parser must correctly handle normal days, both daylight-saving transitions, le
 ## Production gate
 
 Later releases require authorization, durable requests, concurrency control, recovery tests, observability, separate environment credentials, deployment rollback and a demonstrated backup restore. Naming an environment `prod` does not establish these properties.
+
+## Web frontend
+
+FastAPI serves `web/index.html` at `/` and packaged static assets at `/assets/`. The same origin supplies the read-only `/v1/` API, so no browser CORS configuration, CDN, frontend build, or second frontend service dependency is required. The local launcher runs the application on ports 18000 (API documentation) and 18501 (dashboard); both expose the same routes and use the same PostgreSQL database. One instance can serve both UI and API in a later deployment.
+
+The browser converts exact decimal API strings to numbers only for display; CSV exports retain the original decimal strings. The overview fetches per-source intervals for selections of at most 31 days, inserts absent 15-minute slots into the chart grid, and converts MWh per quarter-hour to average MW by multiplying by four. Stacked areas are drawn only across contiguous slots with all six sources available; gaps are preserved. Longer overview selections and analytical pages use API aggregates. The frontend displays reachability snapshots rather than continuously monitored service health.

@@ -4,7 +4,7 @@ A Python project for exploring Germany’s renewable electricity generation and 
 
 The goal is to turn public SMARD data into reliable time series that analysts can explore and operators can maintain—from importing a CSV to investigating a failed update.
 
-> **Current stage: working local dashboard.** Validated SMARD exports load into PostgreSQL and are served through FastAPI to an interactive Streamlit dashboard. Workflow scheduling and cloud deployment are later milestones.
+> **Current stage: working local dashboard.** Validated SMARD exports load into PostgreSQL and are served through FastAPI to a custom HTML/CSS/JavaScript dashboard. Workflow scheduling and cloud deployment are later milestones.
 
 ## Open the dashboard
 
@@ -15,21 +15,21 @@ With the local services running:
 
 ## Dashboard preview
 
-The Streamlit UI combines an operations overview with renewable-generation analysis. Use the left sidebar to move between pages; **Refresh** reloads cached data and health checks.
+The custom web UI uses a forest-green and sage workspace with generation analysis at the centre and coverage and service health alongside it. Use the left sidebar to move between pages; the refresh icon reloads data and health checks. Click either preview below to open the corresponding section of the [dashboard UI guide](docs/dashboard-guide.md).
 
-[![Energy Operations Dashboard showing import results, data counts, service health, and execution charts](docs/screenshots/dashboard-overview.jpg)](docs/dashboard-guide.md#dashboard)
+[![Energy Operations Dashboard showing generation, selected-period coverage, service health, and recent imports](docs/screenshots/dashboard-overview.jpg)](docs/dashboard-guide.md#overview)
 
 | Page | What you can do |
 |---|---|
-| **Dashboard** | Check import outcomes, stored measurements, API/database health, execution trends, and today’s runs. |
-| **Timeseries** | Filter by year, date range, and energy source; compare daily, monthly, or yearly generation; download aggregates as CSV. |
-| **Data quality** | Inspect coverage across the selected period and review timestamp-normalization notes. |
-| **Import history** | Search filenames, filter execution phases, and inspect publication counts and recorded failures. |
-| **Settings** | View the current local configuration, timezone, units, and API address. |
+| **[Overview](docs/dashboard-guide.md#overview)** | Explore generation for selected dates, check coverage and service health, and inspect recent imports. |
+| **[Timeseries](docs/dashboard-guide.md#timeseries)** | Filter by date range and energy source; compare daily, monthly, or yearly generation; download aggregates as CSV. |
+| **[Data quality](docs/dashboard-guide.md#data-quality)** | Inspect coverage across the selected period and review timestamp-normalization notes. |
+| **[Imports](docs/dashboard-guide.md#imports)** | Search filenames, filter execution phases, and inspect publication counts and recorded failures. |
+| **[Settings](docs/dashboard-guide.md#settings)** | View the current local configuration, timezone, units, and API address. |
 
-[![Timeseries page showing source filters, completeness metrics, and daily generation charts](docs/screenshots/dashboard-timeseries.jpg)](docs/dashboard-guide.md#timeseries)
+[![Timeseries page showing source filters, completeness metrics, and yearly generation analysis](docs/screenshots/dashboard-timeseries.jpg)](docs/dashboard-guide.md#timeseries)
 
-Incomplete periods are labelled as **observed subtotals**. Argo scheduling is marked **Not configured** until orchestration is implemented. Screenshots show the local application on 23 October 2026; counts change as data is imported.
+Incomplete periods are labelled as **observed subtotals**. Argo scheduling is marked **Not configured** until orchestration is implemented. Screenshots show real local data captured on 23 October 2026: Overview uses 16–22 October 2026; Timeseries shows yearly aggregates for 1 May 2024–22 October 2026. The boundary years are partial. Counts change as data is imported.
 
 See the [dashboard UI guide](docs/dashboard-guide.md) for a walkthrough of the controls and metric definitions, or the [local runbook](docs/local-runbook.md) to start the services.
 
@@ -63,7 +63,7 @@ PostgreSQL — store generation data and import history
       ↓
 FastAPI — provide access to the data
       ↓
-Streamlit — display trends, data quality, and import status
+HTML / CSS / JavaScript — charts, coverage, and import monitoring
 ```
 
 Later milestones will add **Argo Workflows** for scheduled imports and **Azure Kubernetes Service (AKS)** for deployment. The [architecture notes](docs/architecture.md) explain the design decisions.
@@ -82,7 +82,7 @@ The current application uses historical local exports. Scheduled retrieval, logi
 
 ## Quick start
 
-You need **Git, Python 3.11+, and Docker Desktop**. The commands below are for macOS/Linux.
+You need **Git, Python 3.11+, and Docker Desktop**. The commands below are for macOS/Linux. No frontend build or npm installation is needed to run the dashboard. Node.js 22+ is needed only to run the JavaScript tests.
 
 ```bash
 git clone https://github.com/larrydinh/renewable-energy-operations.git
@@ -95,6 +95,8 @@ python -m pip install --no-build-isolation --no-deps -e .
 
 energy-ops --help
 python -m pytest
+# Optional frontend data checks (Node.js 22+)
+node --test tests/web/*.test.mjs
 ```
 
 If you already have the repository, start from its directory and skip the first two commands.

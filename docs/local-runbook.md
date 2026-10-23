@@ -6,7 +6,7 @@
 |---|---|---|
 | PostgreSQL 17 | localhost:55432 | Measurements, revisions, and import attempts |
 | FastAPI | http://127.0.0.1:18000/docs | Read-only queries with OpenAPI documentation |
-| Streamlit | http://127.0.0.1:18501 | Five dashboard views; queries the API |
+| Custom web UI | http://127.0.0.1:18501 | HTML/CSS/JavaScript; same-origin FastAPI queries |
 
 The ports are specific to this project to avoid interfering with other applications. All services bind to localhost. The application currently assumes a trusted local user and has no remote login/authorization layer. Historical snapshots are not a live market feed.
 
@@ -47,7 +47,7 @@ python -m uvicorn energy_ops.api:app --host 127.0.0.1 --port 18000
 ```
 
 ```bash
-python -m streamlit run src/energy_ops/dashboard.py
+python -m uvicorn energy_ops.api:app --host 127.0.0.1 --port 18501
 ```
 
 ## Batch imports
@@ -76,7 +76,7 @@ echo "Batch exit code: $batch_exit"
 
 Publication attempts are recorded in `import_runs` when the database is reachable. Filename/directory failures happen before a database import attempt and appear only in the batch output. Database outages can prevent audit persistence. The batch report itself is not stored as a separate database entity.
 
-After a partial failure, inspect the report, fix the rejected input or database problem, and rerun the same directory. Unchanged successful exports will be skipped. Open **Import history** and press **Refresh** to inspect database-recorded outcomes. This command is suitable for a future scheduler, but automated retrieval, scheduling, and interrupted-run reconciliation remain unimplemented.
+After a partial failure, inspect the report, fix the rejected input or database problem, and rerun the same directory. Unchanged successful exports will be skipped. Open **Imports** and press **Refresh** to inspect database-recorded outcomes. This command is suitable for a future scheduler, but automated retrieval, scheduling, and interrupted-run reconciliation remain unimplemented.
 
 ## Import behavior
 
@@ -106,6 +106,7 @@ The overview reports latest observed coverage, not a proof of continuously compl
 ```bash
 ruff check .
 ruff format --check .
+node --test tests/web/*.test.mjs  # Node.js 22+
 python -m pytest
 python -m build --no-isolation
 ```
@@ -137,4 +138,6 @@ Add authenticated operator actions, durable workflow submission, live source acq
 
 ## Dashboard navigation
 
-Dashboard is the operations home: actual import counts, recent execution charts, API/database health checks, and today’s runs. Timeseries contains generation charts and CSV exports. Data quality shows coverage and clock-change notes. Import history supports filename and phase filters. Settings displays local configuration. Argo scheduling is explicitly marked as not configured until orchestration is implemented.
+Overview is the Forest Studio home: choose dates to see generation, observed-measurement counts, and coverage, alongside API/database health and recent imports. For dates spanning at most 31 days, the overview shows 15-minute MW generation, with stacked areas only where all sources have values and gaps elsewhere. Longer selections use daily energy; incomplete daily selections show separate lines and observed subtotals. Recent import counts cover the latest 200 attempts independently of the generation filter. Timeseries contains detailed generation charts and CSV exports. Data quality shows coverage and clock-change notes. Imports supports filename and phase filters. Settings displays local configuration. Argo is marked as not configured until orchestration is implemented. See the [UI guide](dashboard-guide.md) for controls and metric definitions.
+
+The HTML/CSS/JavaScript assets are served by FastAPI and included in the Python wheel. The launcher does not start Streamlit. For frontend edits, refresh the browser after saving; for Python route changes, restart the launcher (or use Uvicorn `--reload` while developing). Both local ports serve the UI and API.
