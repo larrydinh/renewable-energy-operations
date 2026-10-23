@@ -13,7 +13,25 @@ With the local services running:
 - **Dashboard:** [localhost:18501](http://127.0.0.1:18501)
 - **API documentation:** [localhost:18000/docs](http://127.0.0.1:18000/docs)
 
-The workspace has five views: **Dashboard**, **Timeseries**, **Data quality**, **Import history**, and **Settings**. The home page shows import outcomes, execution charts, and service health. In Timeseries and Data quality, filter by year, dates, and source; switch chart resolution; and export selected aggregates as CSV. Settings displays the current local configuration. Incomplete periods are labelled as observed subtotals.
+## Dashboard preview
+
+The Streamlit UI combines an operations overview with renewable-generation analysis. Use the left sidebar to move between pages; **Refresh** reloads cached data and health checks.
+
+[![Energy Operations Dashboard showing import results, data counts, service health, and execution charts](docs/screenshots/dashboard-overview.jpg)](docs/dashboard-guide.md#dashboard)
+
+| Page | What you can do |
+|---|---|
+| **Dashboard** | Check import outcomes, stored measurements, API/database health, execution trends, and today’s runs. |
+| **Timeseries** | Filter by year, date range, and energy source; compare daily, monthly, or yearly generation; download aggregates as CSV. |
+| **Data quality** | Inspect coverage across the selected period and review timestamp-normalization notes. |
+| **Import history** | Search filenames, filter execution phases, and inspect publication counts and recorded failures. |
+| **Settings** | View the current local configuration, timezone, units, and API address. |
+
+[![Timeseries page showing source filters, completeness metrics, and daily generation charts](docs/screenshots/dashboard-timeseries.jpg)](docs/dashboard-guide.md#timeseries)
+
+Incomplete periods are labelled as **observed subtotals**. Argo scheduling is marked **Not configured** until orchestration is implemented. Screenshots show the local application on 23 October 2026; counts change as data is imported.
+
+See the [dashboard UI guide](docs/dashboard-guide.md) for a walkthrough of the controls and metric definitions, or the [local runbook](docs/local-runbook.md) to start the services.
 
 ## What will this project do?
 
