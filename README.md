@@ -4,7 +4,16 @@ A Python project for exploring Germany’s renewable electricity generation and 
 
 The goal is to turn public SMARD data into reliable time series that analysts can explore and operators can maintain—from importing a CSV to investigating a failed update.
 
-> **Current stage: UTC normalization.** The command-line tool reads SMARD files, validates complete 15-minute timelines, and resolves daylight-saving transitions. PostgreSQL storage is next.
+> **Current stage: working local dashboard.** Validated SMARD exports load into PostgreSQL and are served through FastAPI to an interactive Streamlit dashboard. Workflow scheduling and cloud deployment are later milestones.
+
+## Open the dashboard
+
+With the local services running:
+
+- **Dashboard:** [localhost:18501](http://127.0.0.1:18501)
+- **API documentation:** [localhost:18000/docs](http://127.0.0.1:18000/docs)
+
+The workspace has five views: **Dashboard**, **Timeseries**, **Data quality**, **Import history**, and **Settings**. The home page shows import outcomes, execution charts, and service health. In Timeseries and Data quality, filter by year, dates, and source; switch chart resolution; and export selected aggregates as CSV. Settings displays the current local configuration. Incomplete periods are labelled as observed subtotals.
 
 ## What will this project do?
 
@@ -25,7 +34,7 @@ It covers biomass, hydropower, offshore wind, onshore wind, solar photovoltaics,
 
 Source: **Bundesnetzagentur | SMARD.de**, under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). See the [data contract](docs/data-contract.md) for timestamp, unit, and missing-value rules.
 
-## Planned data flow
+## Data flow
 
 ```text
 SMARD CSV files
@@ -47,15 +56,15 @@ Later milestones will add **Argo Workflows** for scheduled imports and **Azure K
 |---|---|---|
 | 1. Foundation | Python package, CLI, tests, and GitHub Actions configuration | Complete |
 | 2. Data ingestion | CSV parsing, timeline validation, and clock-change handling | Complete for local exports |
-| 3. Storage | PostgreSQL, safe reruns, and correction history | Planned |
-| 4. API and dashboard | Generation queries, charts, and import monitoring | Planned |
+| 3. Storage | PostgreSQL, atomic imports, safe reruns, and correction history | Working locally |
+| 4. API and dashboard | Generation queries, charts, quality, and import monitoring | Working locally |
 | 5. Operations and deployment | Scheduled jobs, preprod/prod, and recovery checks | Planned |
 
-The commands read files locally and print JSON reports. Normalization adds UTC boundaries while preserving original labels and energy values. Database loading is the next stage.
+The current application uses historical local exports. Scheduled retrieval, login, preprod/prod deployment, and operational recovery drills remain planned.
 
 ## Quick start
 
-You need **Git and Python 3.11+**. The commands below are for macOS/Linux; no database or cloud account is required for the foundation.
+You need **Git, Python 3.11+, and Docker Desktop**. The commands below are for macOS/Linux.
 
 ```bash
 git clone https://github.com/larrydinh/renewable-energy-operations.git
@@ -71,6 +80,23 @@ python -m pytest
 ```
 
 If you already have the repository, start from its directory and skip the first two commands.
+
+Copy `.env.example` to `.env`, choose a local database password, and use the same password in `DATABASE_URL`. Real credentials stay in this ignored file. A configured `.env` already exists on the development laptop.
+
+```bash
+# On a new machine, fetch the database image once.
+docker pull postgres:17
+
+# First launch: create the database, import the four exports, and start both services.
+./scripts/start-local.sh --data-dir ../data/raw/smard
+
+# Later launches: use the already imported database.
+./scripts/start-local.sh
+```
+
+Keep the terminal running. Ctrl+C stops the API and dashboard; PostgreSQL data persists in a Docker volume. Ports 55432 (database), 18000 (API), and 18501 (dashboard) are bound to localhost. To stop the database too, use `docker compose stop db`.
+
+See the [local runbook](docs/local-runbook.md) for individual commands, tests, backups, and troubleshooting.
 
 ## Parse your SMARD files
 

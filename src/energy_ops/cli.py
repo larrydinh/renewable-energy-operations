@@ -41,7 +41,50 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--start-date", required=True, type=iso_date, help="Local start, inclusive"
     )
     normalize.add_argument("--end-date", required=True, type=iso_date, help="Local end, exclusive")
+    commands.add_parser("init-db", help="Apply versioned PostgreSQL schema migrations")
+    load = commands.add_parser("import-smard", help="Validate and publish one export to PostgreSQL")
+    load.add_argument("file", type=Path)
+    load.add_argument("--start-date", required=True, type=iso_date)
+    load.add_argument("--end-date", required=True, type=iso_date)
+    load.add_argument(
+        "--accept-corrections",
+        action="store_true",
+        help="Explicitly replace conflicting known values, retaining revisions",
+    )
     args = parser.parse_args(argv)
+    if args.command in ("init-db", "import-smard"):
+        from psycopg import Error as PsycopgError
+        from sqlalchemy.exc import SQLAlchemyError
+
+        from energy_ops.db import get_engine, upgrade_database
+        from energy_ops.ingestion import import_file
+
+        if args.command == "import-smard" and args.end_date <= args.start_date:
+            parser.error("--end-date must be after --start-date")
+        try:
+            engine = get_engine()
+            if args.command == "init-db":
+                upgrade_database(engine)
+                print(json.dumps({"status": "schema_ready"}))
+            else:
+                outcome = import_file(
+                    engine,
+                    args.file,
+                    start_date=args.start_date,
+                    end_date=args.end_date,
+                    accept_corrections=args.accept_corrections,
+                )
+                print(json.dumps(outcome))
+            return 0
+        except (SQLAlchemyError, PsycopgError):
+            print(
+                "error: Database operation failed; check PostgreSQL and schema initialization.",
+                file=sys.stderr,
+            )
+            return 1
+        except (ValueError, OSError, RuntimeError) as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 1
     if args.command == "parse-smard":
         try:
             # Emit nothing until every requested file has passed parsing.

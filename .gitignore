@@ -11,6 +11,7 @@ htmlcov/
 coverage.xml
 build/
 dist/
+.local/
 
 # Local credentials and generated data (small fixtures belong in tests/fixtures)
 .env

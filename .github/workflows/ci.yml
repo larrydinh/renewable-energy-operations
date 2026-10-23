@@ -17,6 +17,20 @@ jobs:
     name: Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: energy_ops
+          POSTGRES_PASSWORD: ci_test_password
+          POSTGRES_DB: energy_ops_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U energy_ops -d energy_ops_test"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://energy_ops:ci_test_password@127.0.0.1:5432/energy_ops_test
     strategy:
       fail-fast: false
       matrix:
@@ -45,7 +59,7 @@ jobs:
       - name: Test wheel in a clean environment
         run: |
           python -m venv /tmp/energy-ops-wheel
-          /tmp/energy-ops-wheel/bin/python -m pip install --no-deps dist/*.whl
+          /tmp/energy-ops-wheel/bin/python -m pip install dist/*.whl
           cd /tmp
           /tmp/energy-ops-wheel/bin/energy-ops --version
           /tmp/energy-ops-wheel/bin/python -m energy_ops --help

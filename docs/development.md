@@ -71,7 +71,7 @@ The function holds one file's records in memory and returns an immutable result 
 
 ## Dependencies
 
-`pyproject.toml` declares package metadata and supported dependency ranges. `requirements-dev.txt` pins the development and build tools used locally and in CI.
+`pyproject.toml` declares package metadata and supported dependency ranges. `requirements-dev.txt` pins the application, development and build dependencies used locally and in CI.
 
 Update pins deliberately and check the complete Python CI matrix after dependency changes. These version pins are not a hash-verified dependency lock.
 
@@ -100,6 +100,6 @@ The CI workflow runs on pushes and pull requests when uploaded to GitHub. Branch
 
 Keep full downloads in ignored `data/raw/` or outside the repository. Add small, attributed fixtures under `tests/fixtures/` when implementing the parser. Preserve original source files and describe any fixture transformations.
 
-Never commit passwords, tokens, or real `.env` files. `.env.example` documents configuration when it becomes necessary; no environment variables are required for the current foundation.
+Never commit passwords, tokens, or real `.env` files. `.env.example` documents the database and API settings. See the [local runbook](local-runbook.md) for database setup, imports, starting services, and isolated PostgreSQL tests.
 
 The SMARD data licence is distinct from software licensing. No software licence has been selected for this repository yet.

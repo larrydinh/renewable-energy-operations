@@ -1,6 +1,6 @@
 # Architecture decisions
 
-Status: the Python foundation, SMARD numeric/structural parsing, and complete-grid UTC normalization are implemented. Persistence, the API, dashboard, and deployment remain planned.
+Status: numeric parsing, UTC normalization, PostgreSQL storage, the read-only FastAPI service, and a four-view Streamlit dashboard are implemented locally. Workflow automation and cloud deployment remain planned.
 
 ## Objective
 
@@ -13,7 +13,7 @@ SMARD export -> immutable raw file -> Python validation and normalization
              -> PostgreSQL -> FastAPI -> Streamlit
 ```
 
-Argo will later run the same ingestion command for scheduled and manual jobs. AKS is a later deployment milestone. PostgreSQL is the initial database; Oracle, contracts, settlement and simulated customer readings are outside the first release.
+Argo will later run the same ingestion command for scheduled and manual jobs. AKS is a later deployment milestone. PostgreSQL stores measurements, import attempts and previous corrected values. Oracle, contracts, settlement and simulated customer readings are outside the first release. See the [local runbook](local-runbook.md) for the implemented behavior and current limitations.
 
 ## Boundaries
 
@@ -27,7 +27,7 @@ Argo will later run the same ingestion command for scheduled and manual jobs. AK
 
 ## First implementation gate
 
-A parser must correctly handle normal days, both daylight-saving transitions, leap days, numeric zeros and missing markers. Detectable ordering defects and structurally invalid files must fail clearly. This contract now has automated tests; all four local annual exports have passed normalization with unchanged measurements. The next implementation gate is PostgreSQL schema/migrations, atomic publication, and duplicate-safe reruns.
+A parser must correctly handle normal days, both daylight-saving transitions, leap days, numeric zeros and missing markers. Detectable ordering defects and structurally invalid files must fail clearly. All four annual exports have passed normalization and loading. PostgreSQL integration tests cover duplicate-safe reruns, explicit corrections, preservation of known values, constraints and publication rollback. API tests cover aggregation, coverage, provenance and query bounds.
 
 ## Production gate
 
